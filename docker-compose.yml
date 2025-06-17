@@ -1,0 +1,109 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: orchestrator
+      POSTGRES_PASSWORD: orchestrator_pass
+      POSTGRES_DB: orchestrator_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis-node-base: &redis-node-base
+    image: bitnami/redis-cluster:8.0.2
+    environment:
+      - REDIS_PASSWORD=yourpassword
+      - REDIS_NODES=redis-node-0:9000,redis-node-1:9000,redis-node-2:9000,redis-node-3:9000,redis-node-4:9000,redis-node-5:9000
+
+  redis-node-0:
+    <<: *redis-node-base
+    ports:
+      - "9000:9000"
+    volumes:
+      - redis-data-0:/bitnami
+
+  redis-node-1:
+    <<: *redis-node-base
+    ports:
+      - "9001:9000"
+    volumes:
+      - redis-data-1:/bitnami
+
+  redis-node-2:
+    <<: *redis-node-base
+    ports:
+      - "9002:9000"
+    volumes:
+      - redis-data-2:/bitnami
+
+  redis-node-3:
+    <<: *redis-node-base
+    ports:
+      - "9003:9000"
+    volumes:
+      - redis-data-3:/bitnami
+
+  redis-node-4:
+    <<: *redis-node-base
+    ports:
+      - "9004:9000"
+    volumes:
+      - redis-data-4:/bitnami
+
+  redis-node-5:
+    <<: *redis-node-base
+    ports:
+      - "9005:9000"
+    volumes:
+      - redis-data-5:/bitnami
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  backend:
+    image: job-orchestrator-backend
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-data:/app/data
+    depends_on:
+      - postgres
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - prometheus
+      - grafana
+
+volumes:
+  pgdata:
+  redis-data-0:
+  redis-data-1:
+  redis-data-2:
+  redis-data-3:
+  redis-data-4:
+  redis-data-5:
+  prometheus-data:
+  grafana-data:
+  backend-data:

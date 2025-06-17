@@ -1,0 +1,45 @@
+== Implementation
+
+The system is divided into backend (Java/Spring Boot), frontend (React), and supporting services (Redis, Postgres, Prometheus). Below are concrete steps to implement the MVP with production-grade patterns.
+
+=== 1. Backend (Spring Boot)
+- Scaffold base Spring Boot project with modules:
+  - `api`, `scheduler`, `dag`, `engine`, `executor`, `queue`, `persistence`
+- Define JPA entities: Job, JobExecution, Dag, DagNode
+- Build REST APIs:
+  - Submit job/DAG
+  - Get job status, logs, DAG structure
+- Implement cron scheduler using Quartz or Spring ScheduledTasks
+- Build DAG Resolver with topological sort and condition logic
+- Execution Engine:
+  - Detect workerType
+  - Publish job to Redis Stream
+- Redis queue producer/consumer logic
+  - Use consumer groups per worker type
+- Actuator metrics + Micrometer integration
+- Expose Swagger (OpenAPI) docs
+
+=== 2. Worker Containers
+- Shell Worker: executes `bash -c` commands with timeout
+- HTTP Worker: sends requests using Apache HttpClient or WebClient
+- Redis stream polling + log + status pushback
+
+=== 3. Frontend (React)
+- Create standalone React project (`orchestrator-ui`)
+- Pages:
+  - Job submit form
+  - Job history table
+  - DAG visualization (e.g., using `react-flow`)
+  - Log viewer
+- Interact with REST API using Axios
+- Containerize the UI separately
+
+=== 4. Infrastructure
+- `docker-compose.yml` to run:
+  - Redis
+  - PostgreSQL
+  - Prometheus + Grafana
+  - Backend API
+  - UI (optional via nginx)
+- Configure Prometheus scraping Spring Boot Actuator
+- Preload Grafana dashboards for job metrics
